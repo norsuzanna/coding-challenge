@@ -28,10 +28,13 @@ export const getStores = async () => {
   return stores;
 };
 
-const getSales = async (req: Request, res: Response) => {
+
+const getSalesSummary = async (req: Request, res: Response) => {
+  let subTotal = 0;
+  let taxTotal = 0;
+
   try {
     const orders = await getOrders();
-    const stores = await getStores();
 
     if (!orders?.length) {
       return res.send({
@@ -39,20 +42,28 @@ const getSales = async (req: Request, res: Response) => {
       });
     }
     
-    const paddedOrders = stores?.length
-      ? orders.map((order: any) => ({
-          ...order,
-          store: stores.find((store: any) => store.storeId === order.storeId),
-        }))
-      : orders;
+    orders.forEach((order:any) => {
+      let totalItem = 0;
+      totalItem = parseFloat(order.items) * parseFloat(order.orderValue)
+
+      subTotal += totalItem;
+      taxTotal += totalItem * (parseFloat(order.taxes) / 100);
+    });
+    
+    let summaryObj = {
+      subTotal: subTotal.toFixed(2),
+      taxTotal: taxTotal.toFixed(3),
+      total: (subTotal + taxTotal).toFixed(3)
+    }
+    
 
     return res.json({
-      orders: paddedOrders,
+      ...summaryObj,
     });
   } catch (error) {
-    console.log("--------Failed to getSales.", error);
+    console.log("--------Failed to getSalesSummary.", error);
     return res.status(500).json("Internal Server Error");
   }
 };
 
-export default getSales;
+export default getSalesSummary;

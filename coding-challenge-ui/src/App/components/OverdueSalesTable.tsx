@@ -1,10 +1,17 @@
-import { Table } from "antd";
+import { Table, Typography, Space } from "antd";
 import { memo, useState, useMemo, useCallback } from "react";
-
+import dayjs from "dayjs";
 import { getFlagEmoji } from "../utils";
 
-const OverdueSalesTable = ({ orders = [], isLoading = false }: any) => {
+const { Text } = Typography;
+
+const OverdueSalesTable = ({
+  orders = [],
+  isLoading = false,
+  summary = {},
+}: any) => {
   const [pagination, setPagination] = useState({ current: 1, pageSize: 10 });
+  console.log(summary);
 
   const columns = useMemo(
     () => [
@@ -45,6 +52,40 @@ const OverdueSalesTable = ({ orders = [], isLoading = false }: any) => {
         dataIndex: "destination",
         responsive: ["md"],
       },
+      {
+        title: "DAYS OVERDUE",
+        dataIndex: "latest_ship_date",
+        render: (record: any, item: any) => {
+          return (
+            <Text
+              type={item.shipment_status === "Pending" ? "danger" : "success"}
+              key={item.Id}
+            >
+              {(item.shipment_status === "Pending" ? "-" : "") +
+                calculateDaysOverdue(record)}
+            </Text>
+          );
+        },
+      },
+      {
+        title: "ORDER VALUE",
+        dataIndex: "orderValue",
+        render: (record: any) => "$" + record,
+      },
+      {
+        title: "ORDER TAXES",
+        dataIndex: "taxes",
+        render: (record: any) => record + "%",
+      },
+      {
+        title: "ORDER TOTAL",
+        dataIndex: "orderValue",
+        render: (record: any, item: any) => {
+          return (
+            <Text key={item.Id}>{"$" + calculateOrderTotal(record, item)}</Text>
+          );
+        },
+      },
     ],
     []
   );
@@ -67,15 +108,52 @@ const OverdueSalesTable = ({ orders = [], isLoading = false }: any) => {
     [onChange, pagination, showTotal]
   );
 
+  const calculateDaysOverdue = (date: any) => {
+    let dateDiffFormat = date.split("/").reverse().join("-");
+    let shipDate = dayjs(dateDiffFormat);
+    let today = dayjs(dayjs().format("YYYY-MM-DD"));
+    let overdueDays = today.diff(shipDate, "days");
+
+    return overdueDays;
+  };
+
+  const calculateOrderTotal = (orderValue: any, item: any) => {
+    let totalItem = parseFloat(item.items) * parseFloat(orderValue);
+    let orderTotal = (
+      totalItem * (parseFloat(item.taxes) / 100) +
+      totalItem
+    ).toFixed(2);
+
+    return orderTotal;
+  };
+
   return (
-    <Table
-      size="small"
-      // @ts-ignore
-      columns={columns}
-      loading={isLoading}
-      dataSource={orders}
-      pagination={paginationObj}
-    />
+    <>
+      <Table
+        size="small"
+        // @ts-ignore
+        columns={columns}
+        loading={isLoading}
+        dataSource={orders}
+        pagination={paginationObj}
+        s
+      />
+      <Space direction="vertical">
+        <Text>All Order</Text>
+        <Space className="first-summary">
+          <Text>Sub Total</Text>
+          <Text strong>${summary.subTotal}</Text>
+        </Space>
+        <Space>
+          <Text>Tax Total</Text>
+          <Text strong>${summary.taxTotal}</Text>
+        </Space>
+        <Space>
+          <Text>Total</Text>
+          <Text strong>${summary.total}</Text>
+        </Space>
+      </Space>
+    </>
   );
 };
 

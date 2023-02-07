@@ -12,7 +12,7 @@ const App = () => {
       <Navbar style={{ width: "100%", backgroundColor: "white" }} />
       <Row>
         <Col style={{ width: "100%" }}>
-          <Row style={{ height: "80px" }} />
+          <Row style={{ height: "5%" }} />
           <Row>
             <Col xs={{ span: 0 }} md={{ span: 2 }} />
             <Col xs={{ span: 24 }} md={{ span: 20 }}>
